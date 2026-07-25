@@ -39,12 +39,21 @@ const publishAVideo = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Error in uploading thumbnail to cloud.");
     }
 
+    const owner = req.user?._id;
+
+    if (!owner) {
+        throw new ApiError(400, "User is not authorized.");
+    }
+
     const video = await Video.create({
         videoFile: videoFile.secure_url,
         thumbnail: thumbnail.secure_url,
         title,
         description,
-        duration: videoFile.duration
+        duration: videoFile.duration,
+        views: 0,
+        isPublished: false,
+        owner
     });
 
     const uploadedVideo = await Video.findById(video._id);
