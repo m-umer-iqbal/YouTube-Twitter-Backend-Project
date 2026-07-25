@@ -75,7 +75,7 @@ const registerUser = asyncHandler(async (req, res) => {
     const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
 
     if (!avatarLocalPath) {
-        throw new ApiError(400, "Before Cloudinary Avatar image is required.");
+        throw new ApiError(400, "Error in uploading avatar image.");
     }
 
     // upload them to cloudinary, avatar
@@ -83,7 +83,7 @@ const registerUser = asyncHandler(async (req, res) => {
     const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
     if (!avatar) {
-        throw new ApiError(400, "After Cloudinary Avatar image is required.");
+        throw new ApiError(400, "Error in uploading avatar image to cloud.");
     }
 
     // create user object – create entry in db
@@ -105,9 +105,11 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     // return res
-    return res.status(201).json(
-        new ApiResponse(200, "User registered successfully.", createdUser)
-    )
+    return res
+        .status(201)
+        .json(
+            new ApiResponse(200, "User registered successfully.", createdUser)
+        );
 });
 
 // Login User Function
