@@ -86,7 +86,29 @@ const deleteVideo = asyncHandler(async (req, res) => {
 })
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
-    const { videoId } = req.params
+    const { videoId } = req.params;
+
+    if (!videoId || videoId === "") {
+        throw new ApiError(400, "Video Id is required.");
+    } else if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Video Id is not valid.");
+    }
+
+    const video = await Video.findById(videoId);
+
+    if (!video) {
+        throw new ApiError(400, "Video does not exist.");
+    }
+
+    video.isPublished = !video.isPublished;
+
+    video.save({ ValiditeBeforeSave: false });
+
+    return res
+        .status(201)
+        .json(
+            new ApiResponse(200, video.isPublished, "Video publish status updated successfully.",)
+        );
 })
 
 export {
