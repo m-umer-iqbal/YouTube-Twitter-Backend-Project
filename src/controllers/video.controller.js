@@ -99,8 +99,43 @@ const getVideoById = asyncHandler(async (req, res) => {
 })
 
 const updateVideo = asyncHandler(async (req, res) => {
-    const { videoId } = req.params
-    //TODO: update video details like title, description, thumbnail
+    const { videoId } = req.params;
+    const { title, description } = req.body;
+
+    if (!title || title === "") {
+        throw new ApiError(400, "Video Title is required.");
+    } else if (!description || description === "") {
+        throw new ApiError(400, "Video Description is required.");
+    }
+
+    const thumbnailLocalPath = req.file?.path;
+
+    if (!thumbnailLocalPath) {
+        throw new ApiError(400, "Error in uploading thumbnail.");
+    }
+
+    const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+
+    if (!thumbnail) {
+        throw new ApiError(400, "Error in uploading thumbnail to cloud.");
+    }
+
+    const video = await checkVideoId(videoId);
+
+    if (video.owner.toString() !== req.user?._id.toString()) {
+        throw new ApiError(403, "You are not authorized to delete this video.");
+    }
+
+    video.title = title;
+    video.description = description;
+    video.thumbnail = thumbnail.secure_url;
+    video.save({ ValiditeBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, video, "Video updated successfully.",)
+        );
 
 })
 
