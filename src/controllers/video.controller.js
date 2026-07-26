@@ -63,7 +63,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
     }
 
     return res
-        .status(201)
+        .status(200)
         .json(
             new ApiResponse(200, uploadedVideo, "Video uploaded successfully.",)
         );
@@ -81,8 +81,31 @@ const updateVideo = asyncHandler(async (req, res) => {
 })
 
 const deleteVideo = asyncHandler(async (req, res) => {
-    const { videoId } = req.params
-    //TODO: delete video
+    const { videoId } = req.params;
+
+    if (!videoId || videoId === "") {
+        throw new ApiError(400, "Video Id is required.");
+    } else if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Video Id is not valid.");
+    }
+
+    const video = await Video.findById(videoId);
+
+    if (!video) {
+        throw new ApiError(404, "Video does not exist.");
+    }
+
+    if (video.owner.toString() !== req.user?._id.toString()) {
+        throw new ApiError(403, "You are not authorized to delete this video.");
+    }
+
+    await Video.findByIdAndDelete(videoId);
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, {}, "Video deleted successfully.")
+        );
 })
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
@@ -105,7 +128,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     video.save({ ValiditeBeforeSave: false });
 
     return res
-        .status(201)
+        .status(200)
         .json(
             new ApiResponse(200, video.isPublished, "Video publish status updated successfully.",)
         );
